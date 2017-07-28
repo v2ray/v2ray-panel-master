@@ -16,6 +16,28 @@ class User {
         return this.traffic.used < this.traffic.total;
     }
 
+    async set_total_traffic(db, total) {
+        this.traffic.total = total;
+        await db.collection("users").updateOne({
+            id: this.id
+        }, {
+            $set: {
+                total_traffic: total
+            }
+        });
+    }
+
+    async set_used_traffic(db, used) {
+        this.traffic.used = used;
+        await db.collection("users").updateOne({
+            id: this.id
+        }, {
+            $set: {
+                used_traffic: used
+            }
+        });
+    }
+
     async inc_used_traffic(db, dt) {
         this.traffic.used += dt;
         await db.collection("users").updateOne({
@@ -35,7 +57,7 @@ class User {
             id: user_id
         }).limit(1).toArray();
         if(!r || !r.length) {
-            throw new Error("User not found");
+            throw new Error("User not found: " + user_id);
         }
         return r[0];
     }

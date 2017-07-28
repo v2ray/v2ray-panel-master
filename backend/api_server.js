@@ -25,6 +25,10 @@ class ApiServer {
         this.db = await MongoClient.connect(this.db_url);
         this.app.listen(this.listen_addr);
         this.start_sync();
+        this.trafficmon.start_timeout_checker({
+            server: this,
+            db: this.db
+        });
     }
 
     add_event(ev) {
@@ -115,12 +119,13 @@ function init_local_api(server, app) {
             await server.trafficmon.add_connection({
                 server: server,
                 db: server.db,
-                protocol: data.protocol,
+                protocol: data.protocol || "tcp",
                 remote_ip: data.remote_ip,
                 remote_port: data.remote_port,
                 user_id: data.user_id || ""
             });
         } catch(e) {
+            console.log(e);
             return "" + e;
         }
 
@@ -134,7 +139,7 @@ function init_local_api(server, app) {
             await server.trafficmon.remove_connection({
                 server: server,
                 db: server.db,
-                protocol: data.protocol,
+                protocol: data.protocol || "tcp",
                 remote_ip: data.remote_ip,
                 remote_port: data.remote_port
             });

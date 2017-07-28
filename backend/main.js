@@ -44,7 +44,8 @@ async function run_node(cfg) {
 async function run_master(cfg) {
     let server = new MasterServer({
         listen_addr: cfg.listen_addr,
-        db_url: cfg.db_url
+        db_url: cfg.db_url,
+        admin_users: cfg.admin_users
     });
     server.start();
 }

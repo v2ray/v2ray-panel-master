@@ -1,5 +1,8 @@
 {
     "mode": "master",
     "listen_addr": "127.0.0.1:1247",
-    "db_url": "mongodb://127.0.0.1:27017/v2ray-panel-master"
+    "db_url": "mongodb://127.0.0.1:27017/v2ray-panel-master",
+    "admin_users": [
+        "74ae900b-66df-4594-a977-eaf4205f9b30"
+    ]
 }

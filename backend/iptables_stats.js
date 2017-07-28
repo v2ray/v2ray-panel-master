@@ -18,8 +18,6 @@ async function get_chain_stats(chain_name) {
     let field_names = result.shift()
         .split(" ")
         .filter(v => v);
-    
-    console.log(field_names);
 
     return result.map(v => v.split(" ").filter(v => v))
         .map(v => {

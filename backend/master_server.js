@@ -8,12 +8,19 @@ const fs = require("fs");
 const User = require("./user.js");
 
 class MasterServer {
-    constructor({ listen_addr, db_url }) {
+    constructor({ listen_addr, db_url, admin_users }) {
         this.listen_addr = listen_addr;
         this.db_url = db_url;
+        this.admin_users = admin_users;
+        this.admin_mapping = {};
         this.app = new ice.Ice();
         this.ev_queue = [];
+        this.node_ev_revs = {};
         this.db = null;
+
+        for(const uid of this.admin_users) {
+            this.admin_mapping[uid] = true;
+        }
 
         init_app(this, this.app);
     }
@@ -82,16 +89,15 @@ function init_app(server, app) {
         "base.html",
         "user_login.html",
         "user_register.html",
-        "console.html"
+        "console.html",
+        "admin.html"
     ];
 
     for(const fn of templates) {
         app.add_template(fn, fs.readFileSync(path.join(__dirname, "../templates/" + fn), "utf-8"));
     }
 
-    app.use("/static/", ice.static(path.join(__dirname, "../static")));
-    app.use("/user/", new ice.Flag("init_session"));
-    app.use("/user/console/", async req => {
+    const must_read_user_info = async req => {
         if(!req.session.user_id) {
             throw new ice.Response({
                 status: 302,
@@ -102,13 +108,32 @@ function init_app(server, app) {
             });
         }
         req.user = await User.load_from_database(server.db, req.session.user_id);
-    });
+    };
+
+    const require_admin = req => {
+        if(!req.user || !server.admin_mapping[req.user.id]) {
+            throw new ice.Response({
+                status: 403,
+                body: "This page is only available to administrators."
+            });
+        }
+    };
+
+    app.use("/static/", ice.static(path.join(__dirname, "../static")));
+
+    app.use("/verify_login", new ice.Flag("init_session"));
+    app.use("/user/", new ice.Flag("init_session"));
+    app.use("/user/console/", must_read_user_info);
+
+    app.use("/admin/", new ice.Flag("init_session"));
+    app.use("/admin/", must_read_user_info);
+    app.use("/admin/", require_admin);
 
     app.get("/user/login", req => new ice.Response({
         template_name: "user_login.html",
         template_params: {}
     }));
-    app.post("/user/login/verify", async req => {
+    app.post("/verify_login", async req => {
         let data = req.form();
         let user_id;
 
@@ -155,11 +180,54 @@ function init_app(server, app) {
             template_name: "console.html",
             template_params: {
                 username: req.user.name,
+                user_id: req.user.id,
                 total_traffic: "" + ((req.user.traffic.total || 0) / 1048576) + " M",
                 used_traffic: "" + ((req.user.traffic.used || 0) / 1048576) + " M"
             }
         });
-    })
+    });
+
+    app.get("/admin/index", req => new ice.Response({
+        template_name: "admin.html",
+        template_params: {}
+    }));
+
+    app.post("/admin/action/set_user_traffic", async req => {
+        let data = req.form();
+        let user_id = data.user_id;
+
+        let u;
+
+        try {
+            u = await User.load_from_database(server.db, user_id);
+        } catch(e) {
+            return "User not found";
+        }
+
+        if(typeof(data.total_traffic) == "string" && data.total_traffic) {
+            let total = parseInt(data.total_traffic);
+            await u.set_total_traffic(server.db, total);
+        }
+        if(typeof(data.used_traffic) == "string" && data.used_traffic) {
+            let used = parseInt(data.used_traffic);
+            await u.set_used_traffic(server.db, used);
+        }
+
+        server.add_event({
+            type: "update_user_traffic",
+            user_id: user_id,
+            total_traffic: u.traffic.total,
+            used_traffic: u.traffic.used
+        });
+
+        return new ice.Response({
+            status: 302,
+            headers: {
+                Location: "/admin/index"
+            },
+            body: "Redirecting"
+        });
+    });
 
     app.post("/sync", async req => {
         let data = req.json();
@@ -174,13 +242,15 @@ function init_app(server, app) {
         }
         r = r[0];
 
+        let rev = server.node_ev_revs[key] || 0;
+
         if(data.events) {
             console.log(`Received ${data.events.length} events`);
             for(const ev of data.events) {
                 try {
                     switch(ev.type) {
-                        case "inc_user_traffic": {
-                            let user = server.db.collection("users").find({
+                        case "inc_used_traffic": {
+                            let user = await server.db.collection("users").find({
                                 id: ev.user_id
                             }).limit(1).toArray();
                             if(!user || !user.length) {
@@ -206,9 +276,16 @@ function init_app(server, app) {
                 }
             }
         }
-        let ev_queue = server.ev_queue;
-        server.ev_queue = [];
-        return ice.Response.json(ev_queue);
+        server.node_ev_revs[key] = server.ev_queue.length;
+        let ev_queue = [];
+        for(let i = rev; i < server.ev_queue.length; i++) {
+            ev_queue.push(server.ev_queue[i]);
+        }
+        return ice.Response.json({
+            err: 0,
+            msg: "OK",
+            events: ev_queue
+        });
     });
 }
 
