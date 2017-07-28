@@ -101,7 +101,7 @@ function init_app(server, app) {
                 body: "Redirecting"
             });
         }
-        req.user = await User.get_info_from_database(server.db, req.session.user_id);
+        req.user = await User.load_from_database(server.db, req.session.user_id);
     });
 
     app.get("/user/login", req => new ice.Response({
@@ -154,7 +154,9 @@ function init_app(server, app) {
         return new ice.Response({
             template_name: "console.html",
             template_params: {
-                username: req.user.name
+                username: req.user.name,
+                total_traffic: "" + ((req.user.traffic.total || 0) / 1048576) + " M",
+                used_traffic: "" + ((req.user.traffic.used || 0) / 1048576) + " M"
             }
         });
     })
