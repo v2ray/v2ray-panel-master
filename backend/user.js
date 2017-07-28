@@ -5,6 +5,7 @@ class User {
 
     init(data) {
         this.id = data.id;
+        this.name = data.name;
         this.traffic = {
             total: data.total_traffic,
             used: data.used_traffic

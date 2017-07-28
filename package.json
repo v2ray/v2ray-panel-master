@@ -22,11 +22,13 @@
   },
   "homepage": "https://github.com/v2ray/v2ray-Panel#readme",
   "dependencies": {
+    "bcrypt": "^1.0.2",
     "ice-node": "^0.1.9",
     "ip-address": "^5.8.8",
     "mongodb": "^2.2.30",
     "request": "^2.81.0",
     "request-promise": "^4.2.1",
-    "tesserarius": "^0.3.2"
+    "tesserarius": "^0.3.2",
+    "uuid": "^3.1.0"
   }
 }
