@@ -1,7 +1,8 @@
 const Tesserarius = require("tesserarius");
 const util = require("util");
-const iptables_stats = require("./iptables_stats.js");
 const ip_address = require("ip-address");
+const iptables_stats = require("./iptables_stats.js");
+const User = require("./user.js");
 
 const _iptables = new Tesserarius();
 
@@ -47,7 +48,7 @@ class TrafficMonitor {
         this.started = true;
     }
 
-    async add_connection({ protocol, remote_ip, remote_port }) {
+    async add_connection({ server, db, protocol, remote_ip, remote_port, user_id }) {
         if(!this.started) {
             throw new Error("Not started");
         }
@@ -64,6 +65,11 @@ class TrafficMonitor {
         // TODO: Add IPv6 support
         if(!(new ip_address.Address4(remote_ip).isValid())) {
             throw new Error("Invalid remote ip");
+        }
+
+        let u = await User.load_from_database(db, user_id);
+        if(!u.traffic_is_ok()) {
+            throw new Error("Invalid remaining traffic");
         }
 
         let in_rule = {
@@ -89,11 +95,12 @@ class TrafficMonitor {
         });
 
         this.local_state[conn_desc] = {
-            rules: [ in_rule, out_rule ]
+            rules: [ in_rule, out_rule ],
+            user: u
         };
     }
 
-    async remove_connection({ protocol, remote_ip, remote_port }) {
+    async remove_connection({ server, db, protocol, remote_ip, remote_port }) {
         if(!this.started) {
             throw new Error("Not started");
         }
@@ -112,6 +119,17 @@ class TrafficMonitor {
 
         let stats = (await iptables_stats.get_chain_stats(this.chain_name))
             .filter(v => get_conn_desc(v) == conn_desc);
+
+        let total_traffic = stats
+            .map(v => v.bytes)
+            .reduce((a, b) => a + b, 0);
+        
+        await state.user.inc_used_traffic(db, total_traffic);
+        server.add_event({
+            type: "inc_used_traffic",
+            user_id: state.user.id,
+            dt: total_traffic
+        });
 
         for(let rule of state.rules) {
             await iptables.delete_rule(this.chain_name, rule);

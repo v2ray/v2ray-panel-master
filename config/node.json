@@ -1,0 +1,7 @@
+{
+    "mode": "node",
+    "listen_addr": "127.0.0.1:5212",
+    "db_url": "mongodb://127.0.0.1:27017/v2ray-panel-node",
+    "master_url": "http://127.0.0.1:1247",
+    "node_key": ""
+}
