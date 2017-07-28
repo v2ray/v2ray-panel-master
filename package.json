@@ -1,0 +1,29 @@
+{
+  "name": "v2ray-panel",
+  "version": "0.1.0",
+  "description": "V2Ray Panel",
+  "main": "backend/main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/v2ray/v2ray-Panel.git"
+  },
+  "keywords": [
+    "v2ray",
+    "proxy",
+    "panel"
+  ],
+  "author": "The V2Ray Panel Authors",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/v2ray/v2ray-Panel/issues"
+  },
+  "homepage": "https://github.com/v2ray/v2ray-Panel#readme",
+  "dependencies": {
+    "ice-node": "^0.1.9",
+    "ip-address": "^5.8.8",
+    "tesserarius": "^0.3.2"
+  }
+}
