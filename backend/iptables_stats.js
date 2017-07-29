@@ -5,7 +5,7 @@ let exec_file = util.promisify(child_process.execFile.bind(child_process));
 
 module.exports.get_chain_stats = get_chain_stats;
 async function get_chain_stats(chain_name) {
-    let raw_output = await exec_file("iptables", ["-nvL"]);
+    let raw_output = await exec_file("iptables", ["-nvL", "-w"]);
 
     let result = raw_output
         .split("Chain " + chain_name)[1]

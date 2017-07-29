@@ -415,12 +415,21 @@ function init_app(server, app) {
                                 break;
                             }
 
-                            server.db.collection("users").updateOne({
+                            await server.db.collection("users").updateOne({
                                 id: ev.user_id
                             }, {
                                 $inc: {
                                     used_traffic: ev.dt
                                 }
+                            });
+                            let current = (await server.db.collection("users").find({
+                                id: ev.user_id
+                            }).limit(1).toArray())[0];
+                            server.ev_queue.push({
+                                type: "update_user_traffic",
+                                user_id: ev.user_id,
+                                used_traffic: current.used_traffic,
+                                total_traffic: current.total_traffic
                             });
                             break;
                         }
