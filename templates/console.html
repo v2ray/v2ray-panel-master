@@ -13,11 +13,12 @@
                 <h3>欢迎，{{ username }}。</h3>
                 <ul>
                     <li>用户 ID: {{ user_id }}</li>
-                    <li>总流量: {{ total_traffic }}</li>
-                    <li>已用流量: {{ used_traffic }}</li>
+                    <li>总流量: <span class="traffic-data">{{ total_traffic }}</span></li>
+                    <li>已用流量: <span class="traffic-data">{{ used_traffic }}</span></li>
                 </ul>
             </div>
         </div>
     </div>
 </div>
+<script>format_all_traffic_data();</script>
 {% endblock body %}

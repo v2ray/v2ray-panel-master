@@ -58,7 +58,8 @@ class MasterServer {
         await this.db.collection("users").insertOne({
             id: id,
             name: name,
-            password_hashed: pw_hashed
+            password_hashed: pw_hashed,
+            register_time: Date.now()
         });
     }
 
@@ -90,7 +91,12 @@ function init_app(server, app) {
         "user_login.html",
         "user_register.html",
         "console.html",
-        "admin.html"
+        "admin_base.html",
+        "admin.html",
+        "users.html",
+        "user_settings.html",
+        "nodes.html",
+        "node_remove_confirm.html"
     ];
 
     for(const fn of templates) {
@@ -122,12 +128,21 @@ function init_app(server, app) {
     app.use("/static/", ice.static(path.join(__dirname, "../static")));
 
     app.use("/verify_login", new ice.Flag("init_session"));
+    app.use("/logout", new ice.Flag("init_session"));
     app.use("/user/", new ice.Flag("init_session"));
     app.use("/user/console/", must_read_user_info);
 
     app.use("/admin/", new ice.Flag("init_session"));
     app.use("/admin/", must_read_user_info);
     app.use("/admin/", require_admin);
+
+    app.get("/", req => new ice.Response({
+        status: 302,
+        headers: {
+            Location: "/user/console/index"
+        },
+        body: "Redirecting"
+    }));
 
     app.get("/user/login", req => new ice.Response({
         template_name: "user_login.html",
@@ -148,6 +163,16 @@ function init_app(server, app) {
             status: 302,
             headers: {
                 Location: "/user/console/index"
+            },
+            body: "Redirecting"
+        });
+    });
+    app.get("/logout", req => {
+        req.session.user_id = null;
+        return new ice.Response({
+            status: 302,
+            headers: {
+                Location: "/"
             },
             body: "Redirecting"
         });
@@ -181,8 +206,8 @@ function init_app(server, app) {
             template_params: {
                 username: req.user.name,
                 user_id: req.user.id,
-                total_traffic: "" + ((req.user.traffic.total || 0) / 1048576) + " M",
-                used_traffic: "" + ((req.user.traffic.used || 0) / 1048576) + " M"
+                total_traffic: req.user.traffic.total || 0,
+                used_traffic: req.user.traffic.used || 0
             }
         });
     });
@@ -191,6 +216,125 @@ function init_app(server, app) {
         template_name: "admin.html",
         template_params: {}
     }));
+
+    app.get("/admin/users", async req => {
+        let users = await server.db.collection("users").find().sort({
+            register_time: -1
+        }).toArray();
+        users = users.map(u => {
+            return {
+                id: u.id,
+                name: u.name,
+                register_time: new Date(u.register_time || 0).toLocaleString(),
+                total_traffic: u.total_traffic || 0,
+                used_traffic: u.used_traffic || 0
+            };
+        });
+        return new ice.Response({
+            template_name: "users.html",
+            template_params: {
+                users: users
+            }
+        });
+    });
+
+    app.get("/admin/users/:id", async req => {
+        let id = req.params.id;
+        let u;
+        try {
+            u = await User.load_from_database(server.db, id);
+        } catch(e) {
+            return "Invalid user id";
+        }
+        return new ice.Response({
+            template_name: "user_settings.html",
+            template_params: {
+                user_id: u.id,
+                username: u.name,
+                used_traffic: u.traffic.used,
+                total_traffic: u.traffic.total
+            }
+        });
+    });
+
+    app.get("/admin/nodes", async req => {
+        let nodes = await server.db.collection("nodes").find().sort({
+            create_time: -1
+        }).toArray();
+        nodes = nodes.map(v => {
+            return {
+                name: v.name || "",
+                key: v.key,
+                create_time: v.create_time || 0
+            };
+        });
+        return new ice.Response({
+            template_name: "nodes.html",
+            template_params: {
+                nodes: nodes
+            }
+        });
+    });
+
+    app.post("/admin/nodes/create", async req => {
+        let body = req.form();
+        let name = body.name;
+        if(!name) return "Invalid name";
+        if(await server.db.collection("nodes").find({ name: name }).limit(1).count()) {
+            return "Duplicate name";
+        }
+        await server.db.collection("nodes").insertOne({
+            key: uuid.v4(),
+            name: name,
+            create_time: Date.now()
+        });
+        return new ice.Response({
+            status: 302,
+            headers: {
+                Location: "/admin/nodes"
+            },
+            body: "Redirecting"
+        });
+    });
+
+    app.get("/admin/nodes/remove/confirm/:key", async req => {
+        let node = await server.db.collection("nodes").find({
+            key: req.params.key
+        }).limit(1).toArray();
+        if(!node || !node.length) return "Node not found";
+
+        node = node[0];
+
+        return new ice.Response({
+            template_name: "node_remove_confirm.html",
+            template_params: {
+                name: node.name,
+                key: node.key
+            }
+        });
+    })
+
+    app.post("/admin/nodes/remove/do/:key", async req => {
+        let body = req.form();
+        let confirm_name = body.name;
+        if(!confirm_name) return "Invalid name";
+
+        let node = await server.db.collection("nodes").find({
+            key: req.params.key
+        }).limit(1).toArray();
+        if(!node || !node.length) return "Node not found";
+
+        node = node[0];
+
+        if(node.name != confirm_name) {
+            return "Incorrect name";
+        }
+
+        await server.db.collection("nodes").deleteOne({
+            key: req.params.key
+        });
+        return "OK";
+    });
 
     app.post("/admin/action/set_user_traffic", async req => {
         let data = req.form();
@@ -223,7 +367,7 @@ function init_app(server, app) {
         return new ice.Response({
             status: 302,
             headers: {
-                Location: "/admin/index"
+                Location: "/admin/users"
             },
             body: "Redirecting"
         });

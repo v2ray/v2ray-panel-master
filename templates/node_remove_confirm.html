@@ -1,0 +1,16 @@
+{% extends "admin_base.html" %}
+
+{% block main %}
+<h3>移除节点</h3>
+<div>
+    <p style="color: #7F7F7F">
+        <span>{{ name }}</span>
+    </p>
+</div>
+<form action="/admin/nodes/remove/do/{{ key }}" method="POST">
+    <label for="name">请输入节点名称来确认</label>
+    <input type="text" name="name" id="name" class="form-control" /><br />
+
+    <input type="submit" value="移除" class="btn btn-primary" />
+</form>
+{% endblock main %}

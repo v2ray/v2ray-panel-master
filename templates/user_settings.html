@@ -1,0 +1,21 @@
+{% extends "admin_base.html" %}
+
+{% block main %}
+<h3>用户设置</h3>
+<div>
+    <p style="color: #7F7F7F">
+        <span>{{ username }}</span>
+    </p>
+</div>
+<form action="/admin/action/set_user_traffic" method="POST">
+    <input type="hidden" name="user_id" value="{{ user_id }}" /><br />
+
+    <label for="total_traffic">新的总流量</label>
+    <input type="text" name="total_traffic" id="total_traffic" class="form-control" value="{% if total_traffic is defined %}{{ total_traffic }}{% endif %}" /><br />
+
+    <label for="used_traffic">新的已用流量</label>
+    <input type="text" name="used_traffic" id="used_traffic" class="form-control" value="{% if used_traffic is defined %}{{ used_traffic }}{% endif %}" /><br />
+    
+    <input type="submit" value="更新" class="btn btn-primary" />
+</form>
+{% endblock main %}
