@@ -10,10 +10,24 @@ class User {
             total: data.total_traffic,
             used: data.used_traffic
         };
+        this.vmess = {
+            id: data.vmess_id
+        };
     }
 
     traffic_is_ok() {
         return this.traffic.used < this.traffic.total;
+    }
+
+    async set_vmess_id(db, id) {
+        this.vmess.id = id;
+        await db.collection("users").updateOne({
+            id: this.id
+        }, {
+            $set: {
+                vmess_id: id
+            }
+        });
     }
 
     async set_total_traffic(db, total) {

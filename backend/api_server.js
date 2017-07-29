@@ -3,17 +3,23 @@ const MongoClient = require("mongodb").MongoClient;
 const rp = require("request-promise");
 const TrafficMonitor = require("./traffic_monitor.js");
 const sleep = require("./sleep.js");
+const CoreProcess = require("./core_process.js");
 
 class ApiServer {
-    constructor({ listen_addr, db_url, master_url, node_key, trafficmon }) {
+    constructor({ listen_addr, db_url, master_url, node_key, trafficmon, core_process }) {
         if(!(trafficmon instanceof TrafficMonitor)) {
             throw new Error("Invalid trafficmon");
         }
+        if(!(core_process instanceof CoreProcess)) {
+            throw new Error("Invalid core_process");
+        }
+
         this.listen_addr = listen_addr;
         this.db_url = db_url;
         this.master_url = master_url;
         this.node_key = node_key;
         this.trafficmon = trafficmon;
+        this.core_process = core_process;
         this.ev_queue = [];
         this.app = new ice.Ice();
         this.db = null;
@@ -75,6 +81,13 @@ class ApiServer {
                                         upsert: true
                                     });
 
+                                    break;
+                                }
+
+                                case "update_config": {
+                                    const cfg = ev.config;
+                                    this.core_process.reload_config(cfg);
+                                    await this.core_process.restart();
                                     break;
                                 }
 

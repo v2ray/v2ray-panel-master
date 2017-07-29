@@ -3,5 +3,24 @@
     "listen_addr": "127.0.0.1:5212",
     "db_url": "mongodb://127.0.0.1:27017/v2ray-panel-node",
     "master_url": "http://127.0.0.1:1247",
-    "node_key": ""
+    "node_key": "",
+    "binary_path": "/home/zhy/Projects/thirdParty/V2RayMultiuserMod/main",
+    "v2ray_config": {
+        "log": {
+            "access": "/dev/stdout",
+            "error": "/dev/stdout",
+            "loglevel": "debug"
+        },
+        "inbound": {
+            "port": 1235,
+            "protocol": "vmess",
+            "settings": {
+                "clients": []
+            }
+        },
+        "outbound": {
+            "protocol": "freedom",
+            "settings": {}
+        }
+    }
 }

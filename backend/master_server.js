@@ -90,13 +90,15 @@ function init_app(server, app) {
         "base.html",
         "user_login.html",
         "user_register.html",
-        "console.html",
+        "console_base.html",
+        "me.html",
+        "generate_vmess_id.html",
         "admin_base.html",
         "admin.html",
         "users.html",
         "user_settings.html",
         "nodes.html",
-        "node_remove_confirm.html"
+        "node_remove_confirm.html",
     ];
 
     for(const fn of templates) {
@@ -202,12 +204,27 @@ function init_app(server, app) {
 
     app.get("/user/console/index", req => {
         return new ice.Response({
-            template_name: "console.html",
+            template_name: "me.html",
             template_params: {
                 username: req.user.name,
                 user_id: req.user.id,
                 total_traffic: req.user.traffic.total || 0,
                 used_traffic: req.user.traffic.used || 0
+            }
+        });
+    });
+
+    app.post("/user/console/vmess/generate_id", async req => {
+        if(!req.user.traffic.total) {
+            return "No available traffic";
+        }
+        let vmid = uuid.v4();
+        await req.user.set_vmess_id(server.db, vmid);
+
+        return new ice.Response({
+            template_name: "generate_vmess_id.html",
+            template_params: {
+                id: vmid
             }
         });
     });
@@ -346,6 +363,30 @@ function init_app(server, app) {
         await server.db.collection("nodes").deleteOne({
             key: req.params.key
         });
+        return "OK";
+    });
+
+    app.post("/admin/nodes/update_config", async req => {
+        let users = await server.db.collection("users").find().toArray();
+        users = users.filter(u => u.vmess_id)
+            .map(u => {
+                return {
+                    id: u.vmess_id,
+                    email: u.id,
+                    level: 0,
+                    alterId: 32
+                };
+            });
+        
+        let cfg = {
+            users: users
+        };
+
+        server.add_event({
+            type: "update_config",
+            config: cfg
+        });
+
         return "OK";
     });
 
