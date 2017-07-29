@@ -16,6 +16,9 @@
                     <li>总流量: <span class="traffic-data">{{ total_traffic }}</span></li>
                     <li>已用流量: <span class="traffic-data">{{ used_traffic }}</span></li>
                 </ul>
+                <form action="/logout" method="POST">
+                    <input type="submit" class="btn btn-danger" value="登出" />
+                </form>
             </div>
         </div>
     </div>

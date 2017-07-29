@@ -167,7 +167,7 @@ function init_app(server, app) {
             body: "Redirecting"
         });
     });
-    app.get("/logout", req => {
+    app.post("/logout", req => {
         req.session.user_id = null;
         return new ice.Response({
             status: 302,
@@ -279,7 +279,7 @@ function init_app(server, app) {
     app.post("/admin/nodes/create", async req => {
         let body = req.form();
         let name = body.name;
-        if(!name) return "Invalid name";
+        if(!name || !check_node_name(name)) return "Invalid name";
         if(await server.db.collection("nodes").find({ name: name }).limit(1).count()) {
             return "Duplicate name";
         }
@@ -296,6 +296,19 @@ function init_app(server, app) {
             body: "Redirecting"
         });
     });
+
+    app.post("/admin/nodes/sync_traffic", async req => {
+        let users = await server.db.collection("users").find({}).toArray();
+        for(const u of users) {
+            server.add_event({
+                type: "update_user_traffic",
+                user_id: u.id,
+                total_traffic: u.total_traffic,
+                used_traffic: u.used_traffic
+            });
+        }
+        return "OK";
+    })
 
     app.get("/admin/nodes/remove/confirm/:key", async req => {
         let node = await server.db.collection("nodes").find({
@@ -378,18 +391,18 @@ function init_app(server, app) {
         let key = data.key;
         if(typeof(key) != "string") throw new Error("Invalid key type");
 
-        let r = await server.db.collection("nodes").find({
+        let node = await server.db.collection("nodes").find({
             key: key
         }).limit(1).toArray();
-        if(!r || !r.length) {
+        if(!node || !node.length) {
             return "Invalid key";
         }
-        r = r[0];
+        node = node[0];
 
         let rev = server.node_ev_revs[key] || 0;
 
         if(data.events) {
-            console.log(`Received ${data.events.length} events`);
+            console.log(`Received ${data.events.length} events from node ${node.name}`);
             for(const ev of data.events) {
                 try {
                     switch(ev.type) {
@@ -450,6 +463,10 @@ function check_username(name) {
         }
     }
     return true;
+}
+
+function check_node_name(name) {
+    return check_username(name);
 }
 
 function check_password(pw) {
