@@ -26,8 +26,8 @@ async function get_chain_stats(chain_name) {
                 item[field_names[i]] = v[i];
             }
             
-            item.pkts = parseInt(item.pkts);
-            item.bytes = parseInt(item.bytes);
+            item.pkts = parse_traffic(item.pkts);
+            item.bytes = parse_traffic(item.bytes);
             item.protocol = item.prot;
 
             let port_desc = v[v.length - 1].split(":");
@@ -43,4 +43,20 @@ async function get_chain_stats(chain_name) {
 
             return item;
         });
+}
+
+function parse_traffic(v) {
+    v = v.toUpperCase();
+    let as_int = parseInt(v);
+    if(v.endsWith("K")) {
+        return as_int * 1024;
+    } else if(v.endsWith("M")) {
+        return as_int * 1024 * 1024;
+    } else if(v.endsWith("G")) {
+        return as_int * 1024 * 1024 * 1024;
+    } else if(v.endsWith("T")) {
+        return as_int * 1024 * 1024 * 1024 * 1024;
+    } else {
+        return as_int;
+    }
 }

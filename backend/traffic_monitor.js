@@ -4,6 +4,7 @@ const ip_address = require("ip-address");
 const iptables_stats = require("./iptables_stats.js");
 const User = require("./user.js");
 const sleep = require("./sleep.js");
+const iptables_ops = require("./iptables_ops.js");
 
 const _iptables = new Tesserarius();
 
@@ -49,14 +50,14 @@ class TrafficMonitor {
         } catch(e) {}
 
         try {
-            await iptables.add_rule("INPUT", {
+            await iptables_ops.insert_rule("INPUT", {
                 policy: this.chain_name
             });
         } catch(e) {
             console.log(e);
         }
         try {
-            await iptables.add_rule("OUTPUT", {
+            await iptables_ops.insert_rule("OUTPUT", {
                 policy: this.chain_name
             });
         } catch(e) {
@@ -116,6 +117,30 @@ class TrafficMonitor {
             rules: [ in_rule, out_rule ],
             user: u
         };
+
+        console.log("Connection added: " + conn_desc);
+
+        let prev_traffic = 0;
+        let checker = setInterval(async () => {
+            let stats = (await iptables_stats.get_chain_stats(this.chain_name))
+                .filter(v => get_conn_desc(v) == conn_desc);
+            let total_traffic = stats
+                .map(v => v.bytes)
+                .reduce((a, b) => a + b, 0);
+            if(total_traffic != prev_traffic) {
+                prev_traffic = total_traffic;
+            } else {
+                clearInterval(checker);
+                console.log("Removing connection due to timeout: " + conn_desc);
+                await this.remove_connection({
+                    server: server,
+                    db: db,
+                    protocol: protocol,
+                    remote_ip: remote_ip,
+                    remote_port: remote_port
+                });
+            }
+        }, 10000);
     }
 
     async remove_connection({ server, db, protocol, remote_ip, remote_port }) {
@@ -157,53 +182,6 @@ class TrafficMonitor {
     }
 
     async start_timeout_checker({ server, db }) {
-        if(!this.started) {
-            throw new Error("Not started");
-        }
-
-        let conn_stats = {};
-        const timeout_ms = 60000;
-
-        while(true) {
-            try {
-                let t = Date.now();
-                let stats = await iptables_stats.get_chain_stats(this.chain_name);
-                for(let item of stats) {
-                    let conn_desc = get_conn_desc(item);
-                    if(!conn_stats[conn_desc]) {
-                        conn_stats[conn_desc] = {
-                            last_active_time: t,
-                            last_stat: item
-                        };
-                    } else {
-                        let prev = conn_stats[conn_desc];
-                        if(prev.last_stat.bytes != item.bytes) {
-                            prev.last_active_time = t;
-                            prev.last_stat = item;
-                        } else {
-                            if(t - prev.last_active_time > timeout_ms) {
-                                console.log("Removing connection due to timeout: " + conn_desc);
-                                try {
-                                    await this.remove_connection({
-                                        server: server,
-                                        db: db,
-                                        protocol: prev.last_stat.protocol,
-                                        remote_ip: prev.last_stat.remote_ip,
-                                        remote_port: prev.last_stat.remote_port
-                                    });
-                                } catch(e) {
-                                    console.log(e);
-                                }
-                                delete conn_stats[conn_desc];
-                            }
-                        }
-                    }
-                }
-            } catch(e) {
-                console.log(e);
-            }
-            await sleep(5000);
-        }
     }
 
     async get_stats() {
