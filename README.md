@@ -6,42 +6,49 @@
 
 环境要求： 
 
-- 64 位 Linux, glibc 与 libstdc++ 版本最低与 Ubuntu 14.04 相同
-- Node.JS v8.0 或以上
-- MongoDB
-- [Ice Core 核心库](https://github.com/losfair/IceCore)
+- 64 位 Linux , **glibc 版本最低 2.14**
 
-安装: 
+安装 (Debian / Ubuntu): 
 
 ```
-git clone https://github.com/v2ray/v2ray-Panel
-cd v2ray-Panel
-npm install
+bash < (curl -L -s https://raw.githubusercontent.com/v2ray/v2ray-Panel/master/tools/install_debian.sh)
 ```
 
-Panel 前端节点:
+安装 (CentOS): 
 
 ```
-# Auto generate admin id
-chmod +x tools/setup_master.sh
+bash < (curl -L -s https://raw.githubusercontent.com/v2ray/v2ray-Panel/master/tools/install_centos.sh)
+```
+
+主节点:
+
+```
+# Initialize
+cd /usr/local/v2ray-panel/v2ray-Panel/
+chmod +x ./tools/setup_master.sh
 ./tools/setup_master.sh
 
 # Run
-node backend/main.js config/master.json
+v2ray-panel-master
 ```
 
 承载节点:
 
 ```
 # Connect the master
-chmod +x tools/setup_node.sh
+cd /usr/local/v2ray-panel/v2ray-Panel/
+chmod +x ./tools/setup_node.sh
 ./tools/setup_node.sh
 
 # Run
-node backend/main.js config/node.json
+v2ray-panel-node
 ```
 
-其中， `config/master.json` 和 `config/node.json` 是配置文件，可以根据需要修改。
+其中， 
+
+- `config/master.json` 和 `config/node.json` 是配置文件，可以根据需要修改。
+- 承载节点初始化所需的 Node Key 是 Panel 中创建节点时生成的。
+- 目前，每次有用户变动或在 Panel 中手动修改用户流量时，需要在管理后台更新配置。
 
 ### Patch Core
 
