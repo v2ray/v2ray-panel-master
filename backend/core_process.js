@@ -45,7 +45,8 @@ class CoreProcess {
                 this.handle = null;
             } else {
                 console.log("Unexpected exit of V2Ray process");
-                process.exit(1);
+                this.handle = null;
+                this.start();
             }
         });
     }
