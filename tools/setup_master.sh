@@ -1,7 +1,36 @@
 #!/bin/bash
 
-uuid=$(python  -c 'import uuid; print uuid.uuid4()')
+config_file=/etc/v2ray-panel/master.json
 
-sed -i -e "s/74ae900b-66df-4594-a977-eaf4205f9b30/$uuid/g" ./config/master.json
+echo -n "Choose a port for VMess inbound: (default: 1235)"
+read vmess_port
+if [ ! $vmess_port ]; then
+    vmess_port="1235"
+fi
+sed -i -e "s/VMESS_PORT/$vmess_port/g" $config_file
 
-echo "Your admin uuid is $uuid"
+echo -n "Choose a port for the Web panel: (default: 1247)"
+read web_port
+if [ ! $web_port ]; then
+    web_port="1247"
+fi
+sed -i -e "s/WEB_PORT/$web_port/g" $config_file
+
+echo "Choose a username and password for your account."
+
+echo -n "Username: "
+read username
+
+echo -n "Password: "
+read password
+
+uuid=$(node ./backend/cli.js -c $config_file register -u "$username" -p "$password")
+
+if  [ $? != 0 ]; then
+    echo $uuid
+    exit 1
+fi
+
+sed -i -e "s/74ae900b-66df-4594-a977-eaf4205f9b30/$uuid/g" $config_file
+
+echo "Done."
