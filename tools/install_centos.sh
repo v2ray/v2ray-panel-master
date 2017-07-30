@@ -22,7 +22,7 @@ cd /tmp
 rm -rf v2ray-panel | true
 mkdir v2ray-panel
 cd v2ray-panel
-wget https://github.com/losfair/IceCore/releases/download/v0.1.6/ice_core_linux.tar.xz
+wget https://github.com/losfair/IceCore/releases/download/v0.2.0/ice_core_linux.tar.xz
 xz -d < ice_core_linux.tar.xz | tar x
 cp dist/libice_core.so /usr/lib/
 
