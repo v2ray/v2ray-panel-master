@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export PATH+=:/usr/local/v2ray-panel/node/bin
+
 config_file=/etc/v2ray-panel/master.json
 
 echo -n "Choose a port for VMess inbound: (default: 1235)"

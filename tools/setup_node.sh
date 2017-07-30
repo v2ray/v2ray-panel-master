@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export PATH+=:/usr/local/v2ray-panel/node/bin
+
 config_file=/etc/v2ray-panel/node.json
 
 echo -n "Please enter the address of master server: (default: http://127.0.0.1:1247)"
