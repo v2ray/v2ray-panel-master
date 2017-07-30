@@ -22,12 +22,22 @@ npm install
 Panel 前端节点:
 
 ```
+# Auto generate admin id
+chmod +x tools/setup_master.sh
+./tools/setup_master.sh
+
+# Run
 node backend/main.js config/master.json
 ```
 
 承载节点:
 
 ```
+# Connect the master
+chmod +x tools/setup_node.sh
+./tools/setup_node.sh
+
+# Run
 node backend/main.js config/node.json
 ```
 
