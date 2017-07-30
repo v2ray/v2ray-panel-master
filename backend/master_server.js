@@ -25,8 +25,12 @@ class MasterServer {
         init_app(this, this.app);
     }
 
-    async start() {
+    async init() {
         this.db = await MongoClient.connect(this.db_url);
+    }
+
+    async start() {
+        await this.init();
         this.app.listen(this.listen_addr);
     }
 
@@ -61,6 +65,7 @@ class MasterServer {
             password_hashed: pw_hashed,
             register_time: Date.now()
         });
+        return id;
     }
 
     async user_login(name, pw) {
