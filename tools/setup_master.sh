@@ -4,13 +4,6 @@ export PATH+=:/usr/local/v2ray-panel/node/bin
 
 config_file=/etc/v2ray-panel/master.json
 
-echo -n "Choose a port for VMess inbound: (default: 1235)"
-read vmess_port
-if [ ! $vmess_port ]; then
-    vmess_port="1235"
-fi
-sed -i -e "s/VMESS_PORT/$vmess_port/g" $config_file
-
 echo -n "Choose a port for the Web panel: (default: 1247)"
 read web_port
 if [ ! $web_port ]; then
