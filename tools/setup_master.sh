@@ -13,11 +13,16 @@ sed -i -e "s/WEB_PORT/$web_port/g" $config_file
 
 echo "Choose a username and password for your account."
 
-echo -n "Username: "
-read username
+read -p "Username: " username
 
-echo -n "Password: "
-read password
+while true; do
+    read -s -p "Password: " password
+    echo
+    read -s -p "Password (again): " password2
+    echo
+    [ "$password" = "$password2" ] && break
+    echo "The passwords DO NOT match, please try again."
+done
 
 uuid=$(node ./backend/cli.js -c $config_file register -u "$username" -p "$password")
 
