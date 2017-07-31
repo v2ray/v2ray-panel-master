@@ -11,13 +11,13 @@
 安装 (Debian / Ubuntu): 
 
 ```
-bash < (curl -L -s https://raw.githubusercontent.com/v2ray/v2ray-Panel/master/tools/install_debian.sh)
+curl -O "https://raw.githubusercontent.com/v2ray/v2ray-Panel/master/tools/install_debian.sh" && bash install_debian.sh
 ```
 
 安装 (CentOS): 
 
 ```
-bash < (curl -L -s https://raw.githubusercontent.com/v2ray/v2ray-Panel/master/tools/install_centos.sh)
+curl -O "https://raw.githubusercontent.com/v2ray/v2ray-Panel/master/tools/install_centos.sh" && bash install_centos.sh
 ```
 
 主节点:
