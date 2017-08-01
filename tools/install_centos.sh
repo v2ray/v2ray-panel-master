@@ -25,6 +25,7 @@ cd v2ray-panel
 wget https://github.com/losfair/IceCore/releases/download/v0.2.0/ice_core_linux.tar.xz
 xz -d < ice_core_linux.tar.xz | tar x
 cp dist/libice_core.so /usr/lib/
+cp dist/libice_core.so /usr/lib64/
 
 wget https://nodejs.org/dist/v8.2.1/node-v8.2.1-linux-x64.tar.xz
 xz -d < node-v8.2.1-linux-x64.tar.xz | tar x

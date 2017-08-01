@@ -23,8 +23,8 @@ while true; do
     [ "$password" = "$password2" ] && break
     echo "The passwords DO NOT match, please try again."
 done
-
-uuid=$(node ./backend/cli.js -c $config_file register -u "$username" -p "$password")
+cd /usr/local/v2ray-panel/v2ray-Panel 
+uuid=$(/usr/local/v2ray-panel/node/bin/node ./backend/cli.js -c $config_file register -u "$username" -p "$password")
 
 if  [ $? != 0 ]; then
     echo $uuid
