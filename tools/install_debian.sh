@@ -26,7 +26,7 @@ chmod +x v2ray_patched
 git clone https://github.com/v2ray/v2ray-Panel
 cd v2ray-Panel
 
-export PATH+=:/usr/local/v2ray-panel/node/bin
+export "/usr/local/v2ray-panel/node/bin:"$PATH
 npm install --unsafe-perm
 
 mkdir /etc/v2ray-panel && cp config/*.json /etc/v2ray-panel/
@@ -34,7 +34,7 @@ mkdir /etc/v2ray-panel && cp config/*.json /etc/v2ray-panel/
 cat > /usr/local/bin/v2ray-panel-master << EOF
 
 #!/bin/bash
-export PATH+=:/usr/local/v2ray-panel/node/bin
+export "/usr/local/v2ray-panel/node/bin:"$PATH
 node /usr/local/v2ray-panel/v2ray-Panel/backend/main.js /etc/v2ray-panel/master.json
 
 EOF
@@ -42,7 +42,7 @@ EOF
 cat > /usr/local/bin/v2ray-panel-node << EOF
 
 #!/bin/bash
-export PATH+=:/usr/local/v2ray-panel/node/bin
+export "/usr/local/v2ray-panel/node/bin:"$PATH
 killall v2ray_patched | true
 node /usr/local/v2ray-panel/v2ray-Panel/backend/main.js /etc/v2ray-panel/node.json
 
