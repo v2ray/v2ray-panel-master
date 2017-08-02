@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export PATH+=:/usr/local/v2ray-panel/node/bin
+export "/usr/local/v2ray-panel/node/bin:"$PATH
 
 config_file=/etc/v2ray-panel/node.json
 
