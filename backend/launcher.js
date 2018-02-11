@@ -2,8 +2,6 @@ const fs = require("fs");
 const tmp = require("tmp");
 const path = require("path");
 const TrafficMonitor = require("./traffic_monitor.js");
-const ApiServer = require("./api_server.js");
-const MasterServer = require("./master_server.js");
 const CoreProcess = require("./core_process.js");
 
 module.exports.run_with_config_file = run_with_config_file;
@@ -37,6 +35,8 @@ async function run_with_config(cfg) {
 }
 
 async function run_node(cfg) {
+    const ApiServer = require("./api_server.js");
+
     let trafficmon = new TrafficMonitor();
     await trafficmon.start();
 
@@ -64,6 +64,8 @@ async function run_node(cfg) {
 }
 
 async function run_master(cfg) {
+    const MasterServer = require("./master_server.js");
+
     let server = new MasterServer({
         listen_addr: cfg.listen_addr,
         db_url: cfg.db_url,

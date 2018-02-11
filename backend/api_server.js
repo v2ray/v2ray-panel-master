@@ -1,4 +1,6 @@
-const ice = require("ice-node");
+const Koa = require("koa");
+const Router = require("koa-router");
+const body_parser = require('koa-bodyparser');
 const MongoClient = require("mongodb").MongoClient;
 const rp = require("request-promise");
 const TrafficMonitor = require("./traffic_monitor.js");
@@ -21,15 +23,17 @@ class ApiServer {
         this.trafficmon = trafficmon;
         this.core_process = core_process;
         this.ev_queue = [];
-        this.app = new ice.Ice();
+        this.app = new Koa();
         this.db = null;
 
         init_app(this, this.app);
     }
 
     async start() {
+        let listen_addr = this.listen_addr.split(":");
+
         this.db = await MongoClient.connect(this.db_url);
-        this.app.listen(this.listen_addr);
+        this.app.listen(parseInt(listen_addr[1]), listen_addr[0]);
         this.start_sync();
         this.trafficmon.start_timeout_checker({
             server: this,
@@ -110,23 +114,29 @@ class ApiServer {
 module.exports = ApiServer;
 
 function init_app(server, app) {
-    init_local_api(server, app);
+    app.use(body_parser());
 
-    app.get("/stats", async req => ice.Response.json(await server.trafficmon.get_stats()));
+    let router = new Router();
+    init_local_api(server, app, router);
+
+    router.get("/stats", async ctx => {
+        return await server.trafficmon.get_stats();
+    });
+
+    app.use(router.routes());
 }
 
-function init_local_api(server, app) {
-    app.use("/connection/", req => {
-        if(!req.remote_addr.startsWith("127.0.0.1:")) {
-            throw new ice.Response({
-                status: 403,
-                body: "Permission denied"
-            });
+function init_local_api(server, app, router) {
+    router.use("/connection/", (ctx, next) => {
+        if(ctx.request.ip != "127.0.0.1") {
+            return ctx.throw(403, "Permission denied");
+        } else {
+            return next();
         }
     });
 
-    app.post("/connection/add", async req => {
-        let data = req.json();
+    router.post("/connection/add", async ctx => {
+        let data = ctx.request.body;
 
         try {
             await server.trafficmon.add_connection({
@@ -145,8 +155,8 @@ function init_local_api(server, app) {
         return "OK";
     });
 
-    app.post("/connection/remove", async req => {
-        let data = req.json();
+    router.post("/connection/remove", async ctx => {
+        let data = ctx.request.body;
 
         try {
             await server.trafficmon.remove_connection({
