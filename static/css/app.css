@@ -1,8 +1,0 @@
-#login-box {
-    position: fixed;
-    height: 100px;
-    top: calc(50% - 50px);
-    width: 280px;
-    left: calc(50% - 140px);
-    text-align: center;
-}
